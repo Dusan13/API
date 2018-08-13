@@ -15,7 +15,6 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 public class Location {
-    private long Id;
     private String state;
     private double Lat;
     private double Lon;
@@ -30,14 +29,6 @@ public class Location {
 
     public void setState(String State) {
         this.state = State;
-    }
-    
-    public long getId() {
-        return Id;
-    }
-
-    public void setId(long Id) {
-        this.Id = Id;
     }
 
     public double getLat() {
