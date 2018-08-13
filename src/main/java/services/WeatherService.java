@@ -37,7 +37,8 @@ public class WeatherService {
                 Weather w = new Weather();
                 Location l = new Location();
                 w.setId(rs.getLong(1));
-                w.setDate(rs.getDate(2));
+                DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+                w.setDate(df.format(rs.getDate(2)));
                 l.setId(rs.getLong(3));
                 l.setLat(rs.getFloat(4));
                 l.setLon(rs.getFloat(5));
@@ -80,7 +81,8 @@ public class WeatherService {
                 Weather w = new Weather();
                 Location l = new Location();
                 w.setId(rs.getLong(1));
-                w.setDate(rs.getDate(2));
+                DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+                w.setDate(df.format(rs.getDate(2)));
                 l.setId(rs.getLong(3));
                 l.setLat(rs.getFloat(4));
                 l.setLon(rs.getFloat(5));

@@ -105,7 +105,7 @@ public class WeatherResources {
             //Insert Weather
             PreparedStatement s4 = c.prepareStatement("INSERT INTO weather (Id,Date,IdLoc) VALUES (?,?,?)");
             s4.setLong(1, weather.getId());
-            s4.setDate(2, weather.getDate());
+            s4.setDate(2, Date.valueOf(weather.getDate()));
             s4.setLong(3, IdLoc);
             s4.executeUpdate();
             s4.close();
