@@ -48,44 +48,53 @@ public class WeatherResources {
     public Response get(@DefaultValue("9999") @QueryParam("lat") String latStr, @DefaultValue("9999") @QueryParam("lon") String lonStr) {
         List<Weather> list;
         //if Param are in bad format
-        float lat=0;
+        float lat = 0;
         float lon = 0;
         try {
-           lat = Float.parseFloat(latStr);
-           lon = Float.parseFloat(lonStr);
-        }  catch (NumberFormatException nfe) {
+            lat = Float.parseFloat(latStr);
+            lon = Float.parseFloat(lonStr);
+        } catch (NumberFormatException nfe) {
             return Response.status(400).build();
         }
-        //If some Param is missing
-        if (lat == 9999 || lon == 9999) {
-            return Response.status(400).build();
-        } 
-        //If all Params are there return Weathers for Location
-        else {
-            list = WeatherService.getWeathersByLocation(lat, lon);
+        if (lat == 9999 && lon == 9999) {
+            list = WeatherService.getAllWeathers();
             GenericEntity<List<Weather>> genList = new GenericEntity<List<Weather>>(list) {
             };
-            if (list.isEmpty()) {
-                return Response.status(404).entity(genList).build();
-            } else {
-                return Response.status(200).entity(genList).build();
-            }
+
+            return Response.status(200).entity(genList).build();
+        }
+    //If some Param is missing
+    if (lat == 9999 || lon == 9999) {
+            return Response.status(400).build();
+    }
+
+    //If all Params are there return Weathers for Location
+    
+        else {
+            list = WeatherService.getWeathersByLocation(lat, lon);
+        GenericEntity<List<Weather>> genList = new GenericEntity<List<Weather>>(list) {
+        };
+        if (list.isEmpty()) {
+            return Response.status(404).entity(genList).build();
+        } else {
+            return Response.status(200).entity(genList).build();
         }
     }
-    
-    //POST:: SiteURL/weather
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response createWeather(Weather weather) {
+}
+
+//POST:: SiteURL/weather
+@POST
+        @Consumes(MediaType.APPLICATION_JSON)
+        public Response createWeather(Weather weather) {
         int ret = WeatherService.InsertWeather(weather);
         return Response.status(ret).build();
     }
     
     //GET:: SiteURL/weather/temperature?start=...&end=...
     @GET
-    @Path("temperature")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getMinAndMax(@QueryParam("start") String startStr, @QueryParam("end") String endStr) {
+        @Path("temperature")
+        @Produces(MediaType.APPLICATION_JSON)
+        public Response getMinAndMax(@QueryParam("start") String startStr, @QueryParam("end") String endStr) {
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
         Date start, end;
         try {
