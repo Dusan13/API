@@ -1,6 +1,7 @@
 <html>
 <body>
     <body bgcolor="#82CAFA"/>
+    <p>SiteURL/webapi/*</p>
     <p>GET::/weather  (return all weather data)</p>
     <p>GET::/weather?lat={latitude}&lon={longitude}.   (return filtered weather data)</p>
     <p>/weather/temperature?start={startDate}&end={endDate} (Returning the lowest and highest temperature for all the cities in the given date range)</p>
