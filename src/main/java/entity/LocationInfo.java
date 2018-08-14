@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package entity;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -14,6 +13,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 public class LocationInfo {
+
     private String state;
     private double Lat;
     private double Lon;
@@ -21,7 +21,7 @@ public class LocationInfo {
     private String message;
     private Float min;
     private Float max;
-    
+
     public LocationInfo() {
 
     }
@@ -81,6 +81,5 @@ public class LocationInfo {
     public void setMax(Float max) {
         this.max = max;
     }
-    
-    
+
 }

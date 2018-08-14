@@ -1,6 +1,5 @@
 package entity;
 
-
 import javax.xml.bind.annotation.XmlRootElement;
 
 /*
@@ -8,13 +7,13 @@ import javax.xml.bind.annotation.XmlRootElement;
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 /**
  *
  * @author jd140542d
  */
 @XmlRootElement
 public class Location {
+
     private String state;
     private double Lat;
     private double Lon;

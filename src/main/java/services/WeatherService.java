@@ -5,6 +5,7 @@
  */
 package services;
 
+import com.mycompany.api.WeatherResources;
 import entity.Location;
 import entity.LocationInfo;
 import entity.Weather;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.ws.rs.core.Response;
 
 /**
  *
@@ -30,6 +32,7 @@ public class WeatherService {
     public static List<Weather> getAllWeathers() {
         List<Weather> list = new ArrayList<>();
         try {
+            //Get all weathers with Location
             Connection c = db.DB.getInstance().getConnection();
             Statement s = c.createStatement();
             ResultSet rs = s.executeQuery("SELECT w.Id,w.Date,l.id,l.lat,l.lon,l.city,l.state FROM weather w, location l where l.id = w.idloc order by w.id");
@@ -44,6 +47,7 @@ public class WeatherService {
                 l.setCity(rs.getString(6));
                 l.setState(rs.getString(7));
                 w.setLocation(l);
+                //Get temperature for every hour
                 Statement s2 = c.createStatement();
                 ResultSet rs2 = s2.executeQuery("SELECT hour, temperature FROM temperature where idwea = " + w.getId());
                 while (rs2.next()) {
@@ -68,6 +72,7 @@ public class WeatherService {
         try {
 
             Connection c = db.DB.getInstance().getConnection();
+            //Get Weather for given lon, lat
             PreparedStatement s = c.prepareStatement("SELECT w.Id,w.Date,l.id,l.lat,l.lon,l.city,l.state FROM weather w, location l where l.id = w.idloc"
                     + " and l.lat<=?+0.000001 and l.lat>=?-0.00001 and l.lon<=?+0.000001 and l.lon>=?-0.00001 order by w.id");
             s.setFloat(1, lat);
@@ -87,6 +92,7 @@ public class WeatherService {
                 l.setCity(rs.getString(6));
                 l.setState(rs.getString(7));
                 w.setLocation(l);
+                //Get temperature for every hour
                 Statement s2 = c.createStatement();
                 ResultSet rs2 = s2.executeQuery("SELECT hour, temperature FROM temperature where idwea = " + w.getId());
                 while (rs2.next()) {
@@ -114,6 +120,7 @@ public class WeatherService {
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
             String startString = df.format(start);
             String endString = df.format(end);
+            //Add to list Locations which doesnt have Weather Information in given date range
             ResultSet rs = s.executeQuery("SELECT l.Lat, l.Lon, l.State, l.City FROM location l WHERE l.Id NOT iN "
                     + "(SELECT distinct l.id FROM location l, weather w "
                     + "WHERE l.Id = w.IdLoc AND w.Date >= '" + startString + "' AND w.Date <= '" + endString + "')");
@@ -129,6 +136,7 @@ public class WeatherService {
                 list.add(li);
             }
             s.close();
+            //Locations with WeatherInfo in given date range
             Statement s2 = c.createStatement();
             ResultSet rs2 = s2.executeQuery("SELECT l.lat,l.lon,l.state,l.city, MIN(t.temperature) as min, MAX(t.temperature) as max \n"
                     + "FROM location l, weather w, temperature t\n"
@@ -176,8 +184,10 @@ public class WeatherService {
         try {
             Connection c = db.DB.getInstance().getConnection();
             Statement s = c.createStatement();
-            String str = "SELECT w.id FROM weather w, location l WHERE l.lat >= " + (lat - 0.0001) + " AND l.lat<=" + (lat + 0.0001) + " AND l.lon>=" + (lon - 0.0001) + " AND l.lon<=" + (lon + 0.0001) + " AND w.Date>='" + start + "' AND w.Date<='" + end + "' AND l.id = w.idLoc";
-            ResultSet rs = s.executeQuery("SELECT w.id FROM weather w, location l WHERE l.lat >= " + (lat - 0.0001) + " AND l.lat<=" + (lat + 0.0001) + " AND l.lon>=" + (lon - 0.0001) + " AND l.lon<=" + (lon + 0.0001) + " AND w.Date>='" + start + "' AND w.Date<='" + end + "' AND l.id = w.idLoc");
+            //get wheatherID by Date, lon and lat
+            ResultSet rs = s.executeQuery("SELECT w.id FROM weather w, location l WHERE l.lat >= " 
+                    + (lat - 0.0001) + " AND l.lat<=" + (lat + 0.0001) + " AND l.lon>=" + (lon - 0.0001) 
+                    + " AND l.lon<=" + (lon + 0.0001) + " AND w.Date>='" + start + "' AND w.Date<='" + end + "' AND l.id = w.idLoc");
             while (rs.next()) {
                 Statement s2 = c.createStatement();
                 s2.executeUpdate("DELETE FROM temperature WHERE idWea = " + rs.getInt(1));
@@ -191,5 +201,73 @@ public class WeatherService {
         } catch (SQLException ex) {
             Logger.getLogger(WeatherService.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    public static int InsertWeather(Weather weather) {
+        try {
+            int ret = WeatherService.InsertWeather(weather);
+            //Check if Weather exists
+            Connection c = db.DB.getInstance().getConnection();
+            PreparedStatement s1 = c.prepareStatement("SELECT * FROM weather WHERE Id = ?");
+            s1.setLong(1, weather.getId());
+            ResultSet rs = s1.executeQuery();
+            if (rs.next()) {
+                return 400;
+            }
+            s1.close();
+            //Check if Location exists
+            PreparedStatement s2 = c.prepareStatement("SELECT * FROM location WHERE Lat >= ?-0.0001 and Lat <= ?+0.0001 and Lon >= ?-0.0001 and Lon <= ?+0.0001");
+            Location location = weather.getLocation();
+            s2.setDouble(1, location.getLat());
+            s2.setDouble(2, location.getLat());
+            s2.setDouble(3, location.getLon());
+            s2.setDouble(4, location.getLon());
+
+            ResultSet rs2 = s2.executeQuery();
+
+            //Insert Location if not exists
+            long IdLoc = 0L;
+            if (!rs2.next()) {
+                PreparedStatement s3 = c.prepareStatement("INSERT INTO location (Lat,Lon,City,State) VALUES (?,?,?,?)",
+                        PreparedStatement.RETURN_GENERATED_KEYS);
+                s3.setDouble(1, location.getLat());
+                s3.setDouble(2, location.getLon());
+                s3.setString(3, location.getCity());
+                s3.setString(4, location.getState());
+                s3.executeUpdate();
+                ResultSet idRS = s3.getGeneratedKeys();
+
+                if (idRS.next()) {
+                    IdLoc = idRS.getLong(1);
+                }
+                s3.close();
+            } else {
+                IdLoc = rs2.getLong(1);
+            }
+            s2.close();
+
+            //Insert Weather
+            PreparedStatement s4 = c.prepareStatement("INSERT INTO weather (Id,Date,IdLoc) VALUES (?,?,?)");
+            s4.setLong(1, weather.getId());
+            s4.setDate(2, Date.valueOf(weather.getDate()));
+            s4.setLong(3, IdLoc);
+            s4.executeUpdate();
+            s4.close();
+            //Insert Temperatures
+            PreparedStatement s5 = c.prepareStatement("INSERT INTO temperature (IdWea,hour,temperature) VALUES (?,?,?)");
+            for (int i = 0; i < 24; i++) {
+                s5.setLong(1, weather.getId());
+                s5.setInt(2, i);
+                s5.setFloat(3, weather.getTemperature()[i]);
+                s5.executeUpdate();
+            }
+            s5.close();
+            db.DB.getInstance().putConnection(c);
+            //CODE::Okay
+            return 200;
+        } catch (SQLException ex) {
+            Logger.getLogger(WeatherResources.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 401;
     }
 }

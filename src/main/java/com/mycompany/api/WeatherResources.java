@@ -37,16 +37,22 @@ import services.WeatherService;
 @Path("weather")
 public class WeatherResources {
 
+    //GET:: SiteURL/weather (return all)
+    //or
+    //GET:: SiteURL/weather?lat=...&lon=... (return filtered data)
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@DefaultValue("9999") @QueryParam("lat") float lat, @DefaultValue("9999") @QueryParam("lon") float lon) {
         List<Weather> list;
+        //If some Param is missing
         if (lat == 9999 || lon == 9999) {
             list = WeatherService.getAllWeathers();
             GenericEntity<List<Weather>> genList = new GenericEntity<List<Weather>>(list) {
             };
-            return Response.status(200).entity(genList).build();
-        } else {
+            return Response.status(404).entity(genList).build();
+        } 
+        //If all Params are there return Weathers for Location
+        else {
             list = WeatherService.getWeathersByLocation(lat, lon);
             GenericEntity<List<Weather>> genList = new GenericEntity<List<Weather>>(list) {
             };
@@ -57,76 +63,16 @@ public class WeatherResources {
             }
         }
     }
-
+    
+    //POST:: SiteURL/weather
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createWeather(Weather weather) {
-        try {
-            //Check if Weather exists
-            Connection c = db.DB.getInstance().getConnection();
-            PreparedStatement s1 = c.prepareStatement("SELECT * FROM weather WHERE Id = ?");
-            s1.setLong(1, weather.getId());
-            ResultSet rs = s1.executeQuery();
-            if (rs.next()) {
-                return Response.status(400).build();
-            }
-            s1.close();
-            //Check if Location exists
-            PreparedStatement s2 = c.prepareStatement("SELECT * FROM location WHERE Lat >= ?-0.0001 and Lat <= ?+0.0001 and Lon >= ?-0.0001 and Lon <= ?+0.0001");
-            Location location = weather.getLocation();
-            s2.setDouble(1, location.getLat());
-            s2.setDouble(2, location.getLat());
-            s2.setDouble(3, location.getLon());
-            s2.setDouble(4, location.getLon());
-
-            ResultSet rs2 = s2.executeQuery();
-
-            //Insert Location if not exists
-            long IdLoc = 0L;
-            if (!rs2.next()) {
-                PreparedStatement s3 = c.prepareStatement("INSERT INTO location (Lat,Lon,City,State) VALUES (?,?,?,?)",
-                        PreparedStatement.RETURN_GENERATED_KEYS);
-                s3.setDouble(1, location.getLat());
-                s3.setDouble(2, location.getLon());
-                s3.setString(3, location.getCity());
-                s3.setString(4, location.getState());
-                s3.executeUpdate();
-                ResultSet idRS = s3.getGeneratedKeys();
-
-                if (idRS.next()) {
-                    IdLoc = idRS.getLong(1);
-                }
-                s3.close();
-            } else {
-                IdLoc = rs2.getLong(1);
-            }
-            s2.close();
-
-            //Insert Weather
-            PreparedStatement s4 = c.prepareStatement("INSERT INTO weather (Id,Date,IdLoc) VALUES (?,?,?)");
-            s4.setLong(1, weather.getId());
-            s4.setDate(2, Date.valueOf(weather.getDate()));
-            s4.setLong(3, IdLoc);
-            s4.executeUpdate();
-            s4.close();
-            //Insert Temperatures
-            PreparedStatement s5 = c.prepareStatement("INSERT INTO temperature (IdWea,hour,temperature) VALUES (?,?,?)");
-            for (int i = 0; i < 24; i++) {
-                s5.setLong(1, weather.getId());
-                s5.setInt(2, i);
-                s5.setFloat(3, weather.getTemperature()[i]);
-                s5.executeUpdate();
-            }
-            s5.close();
-            db.DB.getInstance().putConnection(c);
-            //CODE::Okay
-            return Response.status(201).build();
-        } catch (SQLException ex) {
-            Logger.getLogger(WeatherResources.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return Response.status(401).build();
+        int ret = WeatherService.InsertWeather(weather);
+        return Response.status(ret).build();
     }
-
+    
+    //GET:: SiteURL/weather/temperature?start=...&end=...
     @GET
     @Path("temperature")
     @Produces(MediaType.APPLICATION_JSON)

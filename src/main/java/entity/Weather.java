@@ -15,6 +15,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 public class Weather {
+
     private long Id;
     private String date;
     private Location location;
@@ -54,5 +55,5 @@ public class Weather {
     public void setTemperature(float[] temperature) {
         this.temperature = temperature;
     }
-    
+
 }
