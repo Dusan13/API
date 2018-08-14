@@ -5,6 +5,12 @@
  */
 package com.mycompany.api;
 
+import java.sql.Date;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.Path;
@@ -23,22 +29,38 @@ public class EraseResources {
     private static final float defaultFloat = 9999;
 
     @DELETE
-    public Response delete(@DefaultValue("error") @QueryParam("start") String Start,
-            @DefaultValue("error") @QueryParam("end") String End,
-            @DefaultValue("9999") @QueryParam("lat") float lat,
-            @DefaultValue("9999") @QueryParam("lon") float lon) {
+    public Response delete(@DefaultValue("error") @QueryParam("start") String StartString,
+            @DefaultValue("error") @QueryParam("end") String EndString,
+            @DefaultValue("9999") @QueryParam("lat") String latString,
+            @DefaultValue("9999") @QueryParam("lon") String lonString) {
+        
+        float lat = 0;
+        float lon = 0;
+        Date start;
+        Date end;
+        try {
+            lat = Float.parseFloat(latString);
+            lon = Float.parseFloat(lonString);
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            start = new Date(df.parse(StartString).getTime());
+            end = new Date(df.parse(EndString).getTime());
+            
+        } catch (NumberFormatException nfe) {
+            return Response.status(400).build();
+        } catch (ParseException ex) {
+            return Response.status(400).build();
+        }
 
-        //If all Params are empty :: delete All
-        if (Start.equals(defaultValue) && End.equals(defaultValue) && lat == defaultFloat && lon == defaultFloat) {
+        //If all Params a re empty :: delete All
+        if (lat == defaultFloat && lon == defaultFloat) {
             WeatherService.deleteAll();
             return Response.status(200).build();
-        } 
-        //If Some are missing :: return Error 404
-        else if (Start.equals(defaultValue) || End.equals(defaultValue) || lat == defaultFloat || lon == defaultFloat) {
+        } //If Some are missing :: return Error 404
+        else if (lat == defaultFloat || lon == defaultFloat) {
             return Response.status(400).build();
-        //If All params are ok :: delete Weather by Start, end, lat and lon
+            //If All params are ok :: delete Weather by Start, end, lat and lon
         } else {
-            WeatherService.delete(Start, End, lat, lon);
+            WeatherService.delete(StartString, EndString, lat, lon);
             return Response.status(200).build();
         }
 

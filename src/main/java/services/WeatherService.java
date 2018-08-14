@@ -205,7 +205,6 @@ public class WeatherService {
     
     public static int InsertWeather(Weather weather) {
         try {
-            int ret = WeatherService.InsertWeather(weather);
             //Check if Weather exists
             Connection c = db.DB.getInstance().getConnection();
             PreparedStatement s1 = c.prepareStatement("SELECT * FROM weather WHERE Id = ?");
