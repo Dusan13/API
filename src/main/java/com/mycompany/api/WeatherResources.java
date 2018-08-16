@@ -37,17 +37,30 @@ import services.WeatherService;
  *
  * @author Dusan13
  */
+//GET:: SiteURL/weather (return all)
+//or
+//GET:: SiteURL/weather?lat=...&lon=... (return filtered data)
 @Path("weather")
 public class WeatherResources {
 
-    //GET:: SiteURL/weather (return all)
-    //or
-    //GET:: SiteURL/weather?lat=...&lon=... (return filtered data)
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response get(@DefaultValue("9999") @QueryParam("lat") String latStr, @DefaultValue("9999") @QueryParam("lon") String lonStr) {
+    public Response get(@QueryParam("lat") String latStr, @QueryParam("lon") String lonStr) {
+
         List<Weather> list;
-        //if Param are in bad format
+
+        //return AllWeathers if there are no params
+        if (latStr == null && lonStr == null) {
+            list = WeatherService.getAllWeathers();
+            GenericEntity<List<Weather>> genList = new GenericEntity<List<Weather>>(list) {
+            };
+
+            return Response.status(200).entity(genList).build();
+        }
+        //Some params are missing
+        if (latStr == null || lonStr == null) {
+            return Response.status(400).build();
+        }
         float lat = 0;
         float lon = 0;
         try {
@@ -56,22 +69,9 @@ public class WeatherResources {
         } catch (NumberFormatException nfe) {
             return Response.status(400).build();
         }
-        if (lat == 9999 && lon == 9999) {
-            list = WeatherService.getAllWeathers();
-            GenericEntity<List<Weather>> genList = new GenericEntity<List<Weather>>(list) {
-            };
 
-            return Response.status(200).entity(genList).build();
-        }
-    //If some Param is missing
-    if (lat == 9999 || lon == 9999) {
-            return Response.status(400).build();
-    }
-
-    //If all Params are there return Weathers for Location
-    
-        else {
-            list = WeatherService.getWeathersByLocation(lat, lon);
+        //If all Params are ok return Weathers for Location
+        list = WeatherService.getWeathersByLocation(lat, lon);
         GenericEntity<List<Weather>> genList = new GenericEntity<List<Weather>>(list) {
         };
         if (list.isEmpty()) {
@@ -79,22 +79,22 @@ public class WeatherResources {
         } else {
             return Response.status(200).entity(genList).build();
         }
+
     }
-}
 
 //POST:: SiteURL/weather
-@POST
-        @Consumes(MediaType.APPLICATION_JSON)
-        public Response createWeather(Weather weather) {
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response createWeather(Weather weather) {
         int ret = WeatherService.InsertWeather(weather);
         return Response.status(ret).build();
     }
-    
-    //GET:: SiteURL/weather/temperature?start=...&end=...
+
+//GET:: SiteURL/weather/temperature?start=...&end=...
     @GET
-        @Path("temperature")
-        @Produces(MediaType.APPLICATION_JSON)
-        public Response getMinAndMax(@QueryParam("start") String startStr, @QueryParam("end") String endStr) {
+    @Path("temperature")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getMinAndMax(@QueryParam("start") String startStr, @QueryParam("end") String endStr) {
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
         Date start, end;
         try {
@@ -102,8 +102,8 @@ public class WeatherResources {
             end = new Date(df.parse(endStr).getTime());
         } catch (ParseException ex) {
             return Response.status(400).build();
-        } 
-        
+        }
+
         List<LocationInfo> list = WeatherService.getMinMaxForLocation(start, end);
 
         GenericEntity<List<LocationInfo>> genList = new GenericEntity<List<LocationInfo>>(list) {
