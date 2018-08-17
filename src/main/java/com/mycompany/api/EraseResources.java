@@ -9,10 +9,7 @@ import java.sql.Date;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
@@ -52,9 +49,7 @@ public class EraseResources {
             start = new Date(df.parse(StartString).getTime());
             end = new Date(df.parse(EndString).getTime());
 
-        } catch (NumberFormatException nfe) {
-            return Response.status(400).build();
-        } catch (ParseException ex) {
+        } catch (NumberFormatException | ParseException nfe) {
             return Response.status(400).build();
         }
 

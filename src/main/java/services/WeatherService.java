@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.ws.rs.core.Response;
 
 /**
  *
@@ -34,8 +33,13 @@ public class WeatherService {
         try {
             //Get all weathers with Location
             Connection c = db.DB.getInstance().getConnection();
+            if (c == null) {
+                return list;
+            }
             Statement s = c.createStatement();
-            ResultSet rs = s.executeQuery("SELECT w.Id,w.Date,l.id,l.lat,l.lon,l.city,l.state FROM weather w, location l where l.id = w.idloc order by w.id");
+            ResultSet rs = s.executeQuery("SELECT w.Id,w.Date,l.id,l.lat,l.lon,l.city,l.state "
+                    + "FROM weather w, location l "
+                    + "where l.id = w.idloc order by w.id");
             while (rs.next()) {
                 Weather w = new Weather();
                 Location l = new Location();
@@ -72,6 +76,9 @@ public class WeatherService {
         try {
 
             Connection c = db.DB.getInstance().getConnection();
+            if (c == null) {
+                return list;
+            }
             //Get Weather for given lon, lat
             PreparedStatement s = c.prepareStatement("SELECT w.Id,w.Date,l.id,l.lat,l.lon,l.city,l.state FROM weather w, location l where l.id = w.idloc"
                     + " and l.lat<=?+0.000001 and l.lat>=?-0.00001 and l.lon<=?+0.000001 and l.lon>=?-0.00001 order by w.id");
@@ -113,9 +120,12 @@ public class WeatherService {
     }
 
     public static List<LocationInfo> getMinMaxForLocation(Date start, Date end) {
-        List<LocationInfo> list = new ArrayList<LocationInfo>();
+        List<LocationInfo> list = new ArrayList<>();
         try {
             Connection c = db.DB.getInstance().getConnection();
+            if (c == null) {
+                return list;
+            }
             Statement s = c.createStatement();
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
             String startString = df.format(start);
@@ -168,6 +178,9 @@ public class WeatherService {
     public static void deleteAll() {
         try {
             Connection c = db.DB.getInstance().getConnection();
+            if (c == null) {
+                return;
+            }
             Statement s2 = c.createStatement();
             s2.executeUpdate("DELETE FROM temperature");
             s2.close();
@@ -183,6 +196,9 @@ public class WeatherService {
     public static void delete(String start, String end, float lat, float lon) {
         try {
             Connection c = db.DB.getInstance().getConnection();
+            if (c == null) {
+                return;
+            }
             Statement s = c.createStatement();
             //get wheatherID by Date, lon and lat
             ResultSet rs = s.executeQuery("SELECT w.id FROM weather w, location l WHERE l.lat >= " 
@@ -207,6 +223,9 @@ public class WeatherService {
         try {
             //Check if Weather exists
             Connection c = db.DB.getInstance().getConnection();
+            if (c == null) {
+                return 400;
+            }
             PreparedStatement s1 = c.prepareStatement("SELECT * FROM weather WHERE Id = ?");
             s1.setLong(1, weather.getId());
             ResultSet rs = s1.executeQuery();
