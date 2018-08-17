@@ -153,6 +153,7 @@ public class WeatherService {
                     + "WHERE l.id = w.idloc\n"
                     + "AND w.date >= '" + startString + "'\n"
                     + "AND w.date <= '" + endString + "'\n"
+                    + "AND w.id = t.idwea\n"
                     + "GROUP BY l.id");
             while (rs2.next()) {
                 LocationInfo li = new LocationInfo();
